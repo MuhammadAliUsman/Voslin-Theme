@@ -2,7 +2,7 @@
 
 # ==========================================
 # Voslin Theme Auto Installer
-# Fully Automatic Version
+# Fixed for Paymenter + Node 20
 # ==========================================
 
 RED='\033[0;31m'
@@ -14,46 +14,45 @@ NC='\033[0m'
 REPO_URL="https://github.com/sonic-hedgehog/voslin-theme.git"
 BRANCH="main"
 
-# Detect Paymenter directory
-detect_paymenter() {
-
-echo -e "${BLUE}Searching for Paymenter installation...${NC}"
-
-for dir in /var/www/paymenter /var/www/html/paymenter /var/www/*; do
-    if [ -d "$dir/themes" ]; then
-        PAYMENTER_DIR="$dir"
-        break
-    fi
-done
-
-if [ -z "$PAYMENTER_DIR" ]; then
-    echo -e "${RED}Paymenter installation not found.${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}Paymenter found at: $PAYMENTER_DIR${NC}"
-
+PAYMENTER_DIR="/var/www/paymenter"
 THEME_DIR="$PAYMENTER_DIR/themes/voslintheme"
 
-}
+clear
 
-install_dependencies(){
+echo -e "${GREEN}"
+echo "======================================"
+echo " Voslin Theme Auto Installer"
+echo "======================================"
+echo -e "${NC}"
 
-echo -e "${YELLOW}Installing dependencies...${NC}"
+# Install dependencies
+echo -e "${YELLOW}Installing required packages...${NC}"
 
 apt update -y
-apt install -y git curl nodejs npm
+apt install -y curl git sudo
 
-# Install vite globally
+# Install NodeJS 20
+echo -e "${BLUE}Installing NodeJS 20...${NC}"
+
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+echo -e "${GREEN}Node Version:${NC} $(node -v)"
+echo -e "${GREEN}NPM Version:${NC} $(npm -v)"
+
+# Install vite
+echo -e "${YELLOW}Installing Vite...${NC}"
 npm install -g vite
 
-}
+# Go to paymenter
+cd $PAYMENTER_DIR || { echo "Paymenter not found!"; exit 1; }
 
-install_theme(){
+# Install node dependencies
+echo -e "${BLUE}Installing npm dependencies...${NC}"
+npm install
 
+# Prepare temp dir
 TMP_DIR="/tmp/voslin_install"
-
-echo -e "${BLUE}Preparing installation...${NC}"
 
 rm -rf $TMP_DIR
 mkdir -p $TMP_DIR
@@ -70,58 +69,34 @@ echo -e "${YELLOW}Moving theme files...${NC}"
 
 mv $TMP_DIR/themes/* $PAYMENTER_DIR/themes/
 
-}
-
-build_theme(){
-
-echo -e "${BLUE}Building theme with vite...${NC}"
-
-cd $PAYMENTER_DIR
+# Build theme
+echo -e "${BLUE}Building theme with Vite...${NC}"
 
 node vite.js voslintheme
 
-}
+if [ $? -ne 0 ]; then
+echo -e "${RED}Theme build failed!${NC}"
+exit 1
+fi
 
-apply_theme(){
+# Apply theme
+echo -e "${BLUE}Applying Voslin Theme...${NC}"
 
-echo -e "${BLUE}Applying theme...${NC}"
+php artisan app:theme:set voslintheme
 
-cd $PAYMENTER_DIR
-
-php artisan p:settings:change-theme voslintheme
-
-}
-
-cleanup(){
-
+# Cleanup
 echo -e "${YELLOW}Cleaning temporary files...${NC}"
 
-rm -rf /tmp/voslin_install
+rm -rf $TMP_DIR
 
-}
+# Restart services
+echo -e "${BLUE}Restarting services...${NC}"
 
-main(){
-
-clear
+systemctl restart php8.3-fpm
+systemctl restart paymenter 2>/dev/null
 
 echo -e "${GREEN}"
-echo "====================================="
-echo " Voslin Theme Auto Installer"
-echo "====================================="
+echo "======================================"
+echo " Voslin Theme Installed Successfully!"
+echo "======================================"
 echo -e "${NC}"
-
-detect_paymenter
-install_dependencies
-install_theme
-build_theme
-apply_theme
-cleanup
-
-echo -e "${GREEN}====================================="
-echo "Voslin Theme Installed Successfully!"
-echo "====================================="
-echo -e "${NC}"
-
-}
-
-main
