@@ -2,7 +2,7 @@
 
 # ==========================================
 # Voslin Theme Full Auto Installer
-# Compatible with Node 20, Vite + Tailwind
+# Node 18 compatible (no ESM errors)
 # ==========================================
 
 clear
@@ -49,17 +49,17 @@ apt update -y
 apt install -y curl git sudo build-essential
 
 # ----------------------
-# Install Node 20
+# Install Node 18 LTS
 # ----------------------
-echo -e "${BLUE}Installing NodeJS 20...${NC}"
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+echo -e "${BLUE}Installing NodeJS 18 LTS...${NC}"
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 apt install -y nodejs
 
 echo -e "${GREEN}Node Version: $(node -v)${NC}"
 echo -e "${GREEN}NPM Version: $(npm -v)${NC}"
 
 # ----------------------
-# Install Vite
+# Install Vite globally
 # ----------------------
 echo -e "${YELLOW}Installing Vite globally...${NC}"
 npm install -g vite
@@ -101,19 +101,15 @@ echo -e "${YELLOW}Installing new theme...${NC}"
 mv $TMP_DIR/themes/* $PAYMENTER_DIR/themes/
 
 # ----------------------
-# Build theme with ESM-safe Vite
+# Build theme (Node 18 compatible)
 # ----------------------
-echo -e "${BLUE}Building theme with Vite (ESM-safe)...${NC}"
-cd $PAYMENTER_DIR/themes/$THEME_NAME
-npm install
-npx vite build
+echo -e "${BLUE}Building theme with vite.js...${NC}"
+node vite.js $THEME_NAME
 
 if [ $? -ne 0 ]; then
   echo -e "${RED}Theme build failed. Exiting.${NC}"
   exit 1
 fi
-
-cd $PAYMENTER_DIR
 
 # ----------------------
 # Apply theme
@@ -140,6 +136,6 @@ systemctl restart paymenter 2>/dev/null
 echo -e "${GREEN}"
 echo "======================================="
 echo " Voslin Theme Installed Successfully!"
-echo " Node 20 + Vite + Tailwind are supported"
+echo " Node 18 + Vite + Tailwind are supported"
 echo "======================================="
 echo -e "${NC}"
