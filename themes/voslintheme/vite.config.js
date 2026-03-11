@@ -1,3 +1,4 @@
+// /var/www/paymenter/themes/voslintheme/vite.config.js
 import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import path from "path";
@@ -16,21 +17,14 @@ export default defineConfig({
       name: "blade",
       handleHotUpdate({ file, server }) {
         if (file.endsWith(".blade.php")) {
-          server.ws.send({
-            type: "full-reload",
-            path: "*",
-          });
+          server.ws.send({ type: "full-reload", path: "*" });
         }
       },
     },
   ],
   css: {
     postcss: {
-      plugins: [
-        tailwindcss({
-          config: path.resolve("./themes/voslintheme/tailwind.config.js"),
-        }),
-      ],
+      plugins: [tailwindcss({ config: path.resolve("./themes/voslintheme/tailwind.config.js") })],
     },
   },
 });
